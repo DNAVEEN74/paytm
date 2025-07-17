@@ -10,9 +10,9 @@ router.put('/:action',authMiddleware, async (req, res) => {
     try {
 
         if (action === 'changePassword') {
-            const { userName, oldPassword, newPassword } = req.body;
+            const { username, oldPassword, newPassword } = req.body;
 
-            const user = await User.findOne({ username: userName });
+            const user = await User.findOne({ username: username });
 
             if (!user) {
                 return res.status(404).json({ error: "User not found" });
@@ -27,16 +27,16 @@ router.put('/:action',authMiddleware, async (req, res) => {
             const passwordHash = await bcrypt.hash(newPassword, 10);
 
             await User.updateOne(
-                { username: userName },
+                { username: username },
                 { password: passwordHash }
             )
 
             return res.status(200).json({ message: "Password updated successfully" });
 
         } else if (action === 'updateUsername') {
-            const { userName, newUserName, password } = req.body;
+            const { username, newUserName, password } = req.body;
 
-            const user = await User.findOne({username: userName});
+            const user = await User.findOne({username: username});
             if(!user) {
                 return res.status(404).json({ error: "User not found" });
             }
@@ -47,7 +47,7 @@ router.put('/:action',authMiddleware, async (req, res) => {
             }
 
             await User.updateOne(
-                { username: userName },
+                { username: username },
                 { username: newUserName }
             );
 
