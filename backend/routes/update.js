@@ -2,8 +2,9 @@ const express = require("express");
 const User = require("../db/userSchema");
 const router = express.Router();
 const bcrypt = require("bcrypt");
+const authMiddleware = require("../middlewares/authToken");
 
-router.put('/:action', async (req, res) => {
+router.put('/:action',authMiddleware, async (req, res) => {
     const { action } = req.params;
 
     try {
@@ -61,10 +62,6 @@ router.put('/:action', async (req, res) => {
         return res.status(500).json({ error: "Internal server error" });
     }
     
-})
-
-router.put('/forgetPassword', (req, res) => {
-
 })
 
 module.exports = router;

@@ -3,8 +3,9 @@ const router = express.Router();
 const { z } = require("zod");
 const bcrypt = require("bcrypt");
 const User = require("../db/userSchema");
+const Account = require("../db/bank").default;
 const createToken = require("../middlewares/jwtAut");
-const { JWT_SECRET } = require("../config");
+const authMiddleware = require("../middlewares/authToken");
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
@@ -47,6 +48,10 @@ router.post("/signUp", async (req, res) => {
         });
 
         await newUser.save()
+        await Account.create({
+            userId: newUser._id,
+            balance: 1 + Math.floor(Math.random() * 10000)
+        })
         
         const token = createToken(newUser._id);
 
@@ -76,7 +81,7 @@ router.post('/signIn', async (req, res) => {
         }
 
         const { username, password } = parseData;
-        const user = User.findOne({ username});
+        const user = await User.findOne({ username});
 
         if (!user) {
             return res.status(404).json({ error: "User not found" });
@@ -105,5 +110,32 @@ router.post('/signIn', async (req, res) => {
     }
 
 })
+
+router.get('/bulk', authMiddleware, async (req, res) => {
+  const filter = req.query.filter;
+
+  try {
+    const users = await User.find({
+      _id: { $ne: req.userId },
+      $or: [
+        { firstName: { "$regex": filter, "$options": "i" } },
+        { lastName: { "$regex": filter, "$options": "i" } }
+      ]
+    });
+
+    res.json({
+      user: users.map(user => ({
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        _id: user._id
+      }))
+    });
+
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 module.exports = router;
