@@ -1,6 +1,10 @@
+import { useRecoilValue } from 'recoil';
 import '../styles/appBar.css';
+import { userAtom } from '../atoms/usersatom';
 
 export default function AppBar() {
+    const { firstname } = useRecoilValue(userAtom);
+
     return (
         <div className="appBarContainer">
             <p style={{
@@ -17,9 +21,9 @@ export default function AppBar() {
                     fontWeight:'550',
                     fontSize:'18px'
                 }} >
-                    Hello, User
+                    Hello,{firstname}
                 </p>
-                <div className="avatar-circle">U</div>
+                <div className="avatar-circle">{firstname[0]}</div>
             </div>
         </div>
     )

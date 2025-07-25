@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 
 const { JWT_SECRET } = require("../config");
 
-const authMiddleware = (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
     const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
@@ -11,7 +11,7 @@ const authMiddleware = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.userid = decoded.userid;
+        req.userId = decoded.userid;
         next();
     } catch (error) {
         console.error("Token verification failed:", error);

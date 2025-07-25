@@ -6,18 +6,19 @@ const User = require("../db/userSchema");
 const Account = require("../db/bank").default;
 const createToken = require("../middlewares/jwtAut");
 const authMiddleware = require("../middlewares/authToken");
+const { default: mongoose } = require("mongoose");
 
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
 const userSchema = z.object({
-    username: z.string().email(),
     firstname: z.string().min(1).max(50),
     lastname: z.string().min(1).max(50),
+    email: z.string().email(),
     password: z.string().regex(passwordRegex,"Password must be at least 8 characters, include uppercase, lowercase, and a number")
 })
 
 const userSignInSchema = z.object({
-    username: z.string().email(),
+    email: z.string().email(),
     password: z.string().regex(passwordRegex, "Password must be at least 8 characters, include uppercase, lowercase, and a number")
 });
 
@@ -31,19 +32,19 @@ router.post("/signUp", async (req, res) => {
             return res.status(400).json({ error: "Invalid user data" });
         }
         
-        const { username, firstname, lastname } = parseData;
+        const { firstname, lastname, email } = parseData;
         const passwordHash = await bcrypt.hash(parseData.password, 10);
 
-        const existingUser = await User.findOne({ username });
+        const existingUser = await User.findOne({ email });
 
         if (existingUser) {
             return res.status(400).json({ error: "User already exists" });
         }
 
         const newUser = new User({
-            username,
             firstName: firstname,
             lastName: lastname,
+            email: email,
             password: passwordHash
         });
 
@@ -58,6 +59,11 @@ router.post("/signUp", async (req, res) => {
         res.status(201).json({ 
             message: "User created successfully",
             token: token,
+            user: {
+                firstname: firstname,
+                lastname: lastname,
+                userId: newUser._id
+            }
         });
 
     } catch (error) {
@@ -80,11 +86,11 @@ router.post('/signIn', async (req, res) => {
             return res.status(400).json({ error: "Invalid user data" });
         }
 
-        const { username, password } = parseData;
-        const user = await User.findOne({ username});
+        const { email, password } = parseData;
+        const user = await User.findOne({ email});
 
         if (!user) {
-            return res.status(404).json({ error: "User not found" });
+            return res.status(401).json({ error: "User not found" });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -95,9 +101,14 @@ router.post('/signIn', async (req, res) => {
 
         const token = createToken(user._id);
 
-        res.status(200).json({
+        res.status(201).json({
             message: "User signed in successfully",
-            token: token
+            token: token,
+            user: {
+                firstname: user.firstName,
+                lastname: user.lastName,
+                userId: user._id
+            }
         });
         
     } catch (error) {
@@ -112,24 +123,17 @@ router.post('/signIn', async (req, res) => {
 })
 
 router.get('/bulk', authMiddleware, async (req, res) => {
-  const filter = req.query.filter;
-
   try {
     const users = await User.find({
-      _id: { $ne: req.userId },
-      $or: [
-        { firstName: { "$regex": filter, "$options": "i" } },
-        { lastName: { "$regex": filter, "$options": "i" } }
-      ]
+    _id: { $ne: new mongoose.Types.ObjectId(req.userId) }
     });
 
     res.json({
       user: users.map(user => ({
-        username: user.username,
+        user_id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
-        _id: user._id
-      }))
+        }))
     });
 
   } catch (error) {
@@ -137,5 +141,24 @@ router.get('/bulk', authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+router.get('/authenticate',authMiddleware, async (req, res) => {
+    const userId = req.userId;
+    try {
+        const user = await User.findById(userId);
+        
+        if(!user) {
+            return res.status(401).json({
+                message: 'user not found'
+            })
+        }
+
+        return res.status(201).json({
+            message: 'authorized'
+        })
+    } catch (error) {
+        console.log(error)
+    }
+})
 
 module.exports = router;
