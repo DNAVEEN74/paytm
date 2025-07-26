@@ -1,15 +1,16 @@
-import { useRecoilValueLoadable } from 'recoil';
+import { useRecoilValueLoadable, useSetRecoilState } from 'recoil';
 import AppBar from '../components/appBar';
 import BalanceComponent from '../components/balanceComp';
 import Users from '../components/users';
 import '../styles/dashboard.css';
 import { useNavigate } from 'react-router-dom';
-import { userListSelector } from '../atoms/usersatom';
+import { recepientAtom, userListSelector } from '../atoms/usersatom';
 import { useEffect } from 'react';
 import axios from 'axios';
 
 export default function Dashboard() {
     const usersListLoadable = useRecoilValueLoadable(userListSelector);
+    const setReceipientUser = useSetRecoilState(recepientAtom);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -33,6 +34,16 @@ export default function Dashboard() {
 
         authenticate();
     }, [])
+
+    const handleSendMoneyButton = (receiver) => {
+        setReceipientUser({
+            firstname: receiver.firstName,
+            lastname: receiver.lastName,
+            recipientId: receiver.user_id
+        })
+
+        navigate('/send')
+    }
 
     let content = null;
 
@@ -62,7 +73,7 @@ export default function Dashboard() {
                 </div>
                 <button
                     className='sendMoneyButton'
-                    onClick={() => navigate('/Send')}
+                    onClick={() => handleSendMoneyButton(user)}
                 >
                     Send Money
                 </button>

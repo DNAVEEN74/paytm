@@ -10,6 +10,15 @@ export const userAtom = atom({
   }
 })
 
+export const recepientAtom = atom({
+  key: 'receipientAtom',
+  default: {
+    firstname: '',
+    lastname: '',
+    recipientId: ''
+  }
+})
+
 export const userListSelector = selector({
   key: 'userListSelector',
   get: async () => {
