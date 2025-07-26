@@ -11,10 +11,6 @@ export default function Send() {
     const recipientData = useRecoilValue(recepientAtom);
     const navigate = useNavigate();
 
-    useEffect(() => {
-        console.log(recipientData);
-    }, [])
-
     async function doTransaction() {
         try {
             const token = localStorage.getItem('authToken');

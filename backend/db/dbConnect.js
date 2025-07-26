@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const dbUrl = 'mongodb+srv://naveendurgam74:TeluguInfoGuru1234@cluster0.t31gcif.mongodb.net/';
+const dbUrl = process.env.MONGODB_URI;
 
 const connectDB = async () => {
     try {
